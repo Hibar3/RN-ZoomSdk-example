@@ -21,10 +21,10 @@ import {
 
 import RNZoomUsBridge, {RNZoomUsBridgeEventEmitter} from '@mokriya/react-native-zoom-us-bridge';
 
-const ZOOM_APP_KEY = "NWLQKZMr5mQfP7X7BkEvVXIY9OIhnhNZEPu9";
-const ZOOM_APP_SECRET = "P4h5IdJdloZAqiIKva4Sod6g4BfbZ25J8Ywj";
-const ZOOM_JWT_APP_KEY = "Yb2jTA6wRXWhokBBfcpllg";
-const ZOOM_JWT_APP_SECRET = "dWSYjhoFT8hosXR7ZYhhBrFy9CXAVRDgJjYJ";
+const ZOOM_APP_KEY = "";
+const ZOOM_APP_SECRET = "";
+const ZOOM_JWT_APP_KEY = "";
+const ZOOM_JWT_APP_SECRET = "";
 
 export default class App extends Component {
   state = {
