@@ -1,49 +1,35 @@
-import React, {Component, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   StyleSheet,
-  Text,
   View,
-  TextInput,
+  Text,
   TouchableOpacity,
-  NativeModules,
+  TextInput,
   Alert,
-  NativeEventEmitter,
+  Platform,
 } from 'react-native';
+import RNZoomUsBridge from '@mokriya/react-native-zoom-us-bridge';
+import {initZoom, joinMeeting} from './zoomSdk';
 
-import RNZoomUsBridge, {
-  RNZoomUsBridgeEventEmitter,
-} from '@mokriya/react-native-zoom-us-bridge';
+const ZOOM_APP_KEY = '';
+const ZOOM_APP_SECRET = '';
+const ZOOM_JWT_APP_KEY = '';
+const ZOOM_JWT_APP_SECRET = '';
+const ZOOM_DOMAIN = 'zoom.us';
 
-const ZOOM_APP_KEY = 'NWLQKZMr5mQfP7X7BkEvVXIY9OIhnhNZEPu9';
-const ZOOM_APP_SECRET = 'P4h5IdJdloZAqiIKva4Sod6g4BfbZ25J8Ywj';
-const ZOOM_JWT_APP_KEY = 'Yb2jTA6wRXWhokBBfcpllg';
-const ZOOM_JWT_APP_SECRET = 'dWSYjhoFT8hosXR7ZYhhBrFy9CXAVRDgJjYJ';
-
-console.log(NativeModules, 'sien');
 const App: () => React$Node = () => {
-  const [state, setState] = useState({
-    meetingPassword: '',
-    meetingTitle: '',
-    userName: 'demo',
-    userEmail: '',
-    userId: '',
-    accessToken: '',
-    userZoomAccessToken: '',
-    meetingCreated: false,
-  });
-  const [meetingId, setMeetingId] = useState('94991086357');
+  const [meetingId, setMeetingId] = useState('');
+  const [pwd, setPwd] = useState('');
+  const [username, setUsername] = useState('');
+  const [userId, setUserId] = useState('');
 
-  useEffect(() => {
-    initializeZoomSDK();
-  }, []);
-
-  const initializeZoomSDK = () => {
+  const initializeZoomSDK = async () => {
     if (!ZOOM_APP_KEY || !ZOOM_APP_SECRET) {
       return false;
     } else {
       // init sdk
       console.log('init');
-      RNZoomUsBridge.initialize(ZOOM_APP_KEY, ZOOM_APP_SECRET)
+      await RNZoomUsBridge.initialize(ZOOM_APP_KEY, ZOOM_APP_SECRET)
         .then(() => console.log('init success'))
         .catch((err) => {
           console.warn(err);
@@ -52,105 +38,23 @@ const App: () => React$Node = () => {
     }
   };
 
-  const joinMeeting = async () => {
-    const {userName, meetingPassword} = state;
-
-    RNZoomUsBridge.joinMeeting('94991086357', userName, meetingPassword)
-      .then(() => console.log('joining'))
-      .catch((err) => {
-        console.warn(err);
-        Alert.alert('error!', err.message);
-      });
+  const onJoinMeeting = async () => {
+    if (Platform.OS === 'ios') {
+      await RNZoomUsBridge.joinMeeting(meetingId, username, pwd)
+        .then(() => console.log('joining'))
+        .catch((err) => {
+          console.warn(err);
+          Alert.alert('error!', err.message);
+        });
+    } else {
+      joinMeeting(username, meetingId, pwd);
+    }
   };
 
-  const createAccessToken = async () => {
-    // to talk to ZOOM API you will need access token
-    if (!ZOOM_JWT_APP_KEY || !ZOOM_JWT_APP_SECRET) return false;
-    const accessToken = await RNZoomUsBridge.createJWT(
-      ZOOM_JWT_APP_KEY,
-      ZOOM_JWT_APP_SECRET,
-    )
-      .then()
-      .catch((err) => console.log(err));
-
-    console.log(`createAccessToken ${accessToken}`);
-
-    if (state.accessToken) setState({accessToken});
-  };
-
-  const getUserID = async (userEmail, accessToken) => {
-    const fetchURL = `https://api.zoom.us/v2/users/${userEmail}`;
-    const userResult = await fetch(fetchURL, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((response) => response.json())
-      .then((json) => {
-        return json;
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-
-    console.log('userResult', userResult);
-
-    if (userResult && userResult.code === 429) {
-      // rate error try again later
-      Alert.alert('API Rate error try again in a few seconds');
-    }
-
-    if (userResult && userResult.id && userResult.status === 'active') {
-      // set user id
-      const {id: userId} = userResult;
-
-      setState({userId});
-
-      return userId;
-    }
-
-    return false;
-  };
-
-  const createUserZAK = async (userId, accessToken) => {
-    const fetchURL = `https://api.zoom.us/v2/users/${userId}/token?type=zak`;
-    const userZAKResult = await fetch(fetchURL, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((response) => response.json())
-      .then((json) => {
-        return json;
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-
-    console.log('userZAKResult', userZAKResult);
-
-    if (userZAKResult && userZAKResult.code === 429) {
-      // rate error try again later
-      Alert.alert('API Rate error try again in a few seconds');
-    }
-
-    if (userZAKResult && userZAKResult.token) {
-      // set user id
-      const {token} = userZAKResult;
-
-      setState({
-        userZoomAccessToken: token,
-      });
-
-      return token;
-    }
-
-    return false;
-  };
+  useEffect(() => {
+    if (Platform.OS === 'ios') initializeZoomSDK();
+    else initZoom(ZOOM_APP_KEY, ZOOM_APP_SECRET, ZOOM_DOMAIN);
+  });
 
   return (
     <View style={styles.container}>
@@ -163,13 +67,13 @@ const App: () => React$Node = () => {
           style={styles.input}
         />
         <TextInput
-          value={state.userName}
+          value={username}
           placeholder="Your name"
-          onChangeText={(text) => setState({userName: text})}
+          onChangeText={(text) => setUsername(text)}
           style={styles.input}
         />
         <TouchableOpacity
-          onPress={async () => joinMeeting()}
+          onPress={async () => onJoinMeeting()}
           style={styles.button}>
           <Text style={styles.buttonText}>Join Meeting</Text>
         </TouchableOpacity>
@@ -209,7 +113,7 @@ const styles = StyleSheet.create({
     margin: 3,
   },
   buttonText: {
-    color: `black`,
+    color: 'black',
   },
 });
 
