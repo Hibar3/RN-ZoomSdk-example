@@ -1,22 +1,20 @@
-import {NativeModules, NativeEventEmitter} from 'react-native';
-import RNZoomUsBridge, {
-  RNZoomUsBridgeEventEmitter,
-} from '@mokriya/react-native-zoom-us-bridge';
+import {NativeModules} from 'react-native';
+
+const {LavaxZoomSDK} = NativeModules;
 
 //to see what is loaded
 console.log(NativeModules);
-const meetingEventEmitter = new NativeEventEmitter(RNZoomUsBridgeEventEmitter);
 
 async function initZoom(publicKey, privateKey, domain) {
-  console.log('calling zoom', RNZoomUsBridge);
-  const response = await RNZoomUsBridge.initZoom(publicKey, privateKey, domain);
+  console.log('calling zoom', LavaxZoomSDK);
+  const response = await LavaxZoomSDK.initZoom(publicKey, privateKey, domain);
 
   console.log('Response', response);
 }
 
 async function joinMeeting(displayName = 'Stefan', meetingNo, password) {
   console.log('calling zoom - join meeting', displayName, meetingNo, password);
-  const response = await RNZoomUsBridge.joinMeeting(
+  const response = await LavaxZoomSDK.joinMeeting(
     displayName,
     meetingNo,
     password,
@@ -40,7 +38,7 @@ async function startMeeting(
     jwtAccessToken,
     jwtApiKey,
   );
-  const response = await RNZoomUsBridge.startMeeting(
+  const response = await LavaxZoomSDK.startMeeting(
     meetingNumber,
     username,
     userId,
